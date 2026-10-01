@@ -129,13 +129,22 @@ h2{font-family:'Fraunces',serif;font-size:clamp(28px,3vw,40px);font-weight:700;c
 .contacts{display:flex;gap:36px;justify-content:center;margin-top:44px;flex-wrap:wrap}
 .contact{font-size:13px;color:rgba(255,255,255,.5)}
 .contact a{color:rgba(255,255,255,.85);text-decoration:none;font-weight:500;display:inline-block;padding:5px 2px;}
-.footer-social a{font-size:12px;color:rgba(255,255,255,.4);text-decoration:none;display:inline-block;padding:5px 2px;}
 .contact a:hover{color:var(--aqua)}
 
-footer{background:var(--ink);border-top:1px solid rgba(255,255,255,.08);padding:28px 48px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
-.footer-name{font-family:'Fraunces',serif;font-size:15px;font-weight:700;color:white}
+footer{background:var(--ink);border-top:1px solid rgba(255,255,255,.08);padding:56px 48px 28px}
+.footer-top{display:flex;justify-content:space-between;align-items:flex-start;gap:40px;flex-wrap:wrap}
+.footer-name{font-family:'Fraunces',serif;font-size:26px;font-weight:700;color:white;letter-spacing:-.4px;line-height:1.1}
 .footer-name span{color:var(--aqua)}
-.footer-copy{font-size:11px;color:rgba(255,255,255,.3)}
+.footer-tag{margin-top:12px;font-size:11px;font-weight:500;letter-spacing:1.6px;text-transform:uppercase;color:rgba(255,255,255,.45);line-height:1.9}
+.footer-tag i{font-style:normal;color:rgba(255,255,255,.2);margin:0 10px}
+.footer-nav{display:flex;gap:32px;flex-wrap:wrap;padding-top:10px}
+.footer-nav a{font-size:11px;font-weight:500;letter-spacing:1.6px;text-transform:uppercase;color:rgba(255,255,255,.6);text-decoration:none;transition:color .2s}
+.footer-nav a:hover{color:var(--aqua)}
+.footer-bottom{margin-top:44px;padding-top:22px;border-top:1px solid rgba(255,255,255,.1);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.footer-copy{font-size:12px;color:rgba(255,255,255,.4)}
+.footer-legal{display:flex;gap:28px;flex-wrap:wrap}
+.footer-legal a{font-size:12px;color:rgba(255,255,255,.55);text-decoration:none;transition:color .2s}
+.footer-legal a:hover{color:white}
 
 @media(max-width:860px){
   nav{padding:0 20px}.nav-links .nav-text-item{display:none}
@@ -143,7 +152,7 @@ footer{background:var(--ink);border-top:1px solid rgba(255,255,255,.08);padding:
   .photo-wrap{max-width:280px}.stats{grid-template-columns:repeat(2,1fr);padding:36px 20px}
   section{padding:60px 20px}.about-grid,.opteva-inner{grid-template-columns:1fr;gap:40px}
   .pillars,.cards{grid-template-columns:1fr}
-  footer{flex-direction:column;gap:10px;text-align:center;padding:24px 20px}
+  footer{padding:44px 20px 24px}.footer-top,.footer-bottom{flex-direction:column;align-items:center;text-align:center}.footer-top>*,.footer-bottom>*{max-width:100%}.footer-tag{line-height:2.1}.footer-tag i{margin:0 7px}.footer-nav{justify-content:center;gap:16px 24px;padding-top:0}.footer-legal{justify-content:center;gap:20px}
   .btn{width:100%}.btn-sm{width:auto}
   .cta-row{align-items:stretch}
 }
@@ -325,15 +334,28 @@ footer{background:var(--ink);border-top:1px solid rgba(255,255,255,.08);padding:
 </section>
 
 <footer>
-  <div class="footer-name">Stephanie Sullivan<span>.</span></div>
-  <div class="footer-copy">&copy; 2026 Stephanie Sullivan. Founder of Opteva.</div>
-  <div class="footer-social" style="display:flex;gap:16px;flex-wrap:wrap;">
-    <a href="https://opteva.ai" target="_blank" rel="noopener">opteva.ai</a>
-    <a href="https://www.linkedin.com/in/stephanie-r-sullivan/" target="_blank" rel="noopener">LinkedIn</a>
-    <a href="https://www.facebook.com/opteva.i/" target="_blank" rel="noopener">Facebook</a>
-    <a href="https://www.instagram.com/opteva.io/" target="_blank" rel="noopener">Instagram</a>
-    <a href="privacy.html">Privacy</a>
-    <a href="terms.html">Terms</a>
+  <div class="footer-top">
+    <div>
+      <div class="footer-name">Stephanie Sullivan<span>.</span></div>
+      <div class="footer-tag">Founder of Opteva<i>&middot;</i>26-Year Med Spa Operator<i>&middot;</i>AI Builder</div>
+    </div>
+    <div class="footer-nav">
+      <a href="#about">About</a>
+      <a href="https://www.linkedin.com/in/stephanie-r-sullivan/" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://www.instagram.com/opteva.io/" target="_blank" rel="noopener">Instagram</a>
+      <a href="https://www.facebook.com/opteva.i/" target="_blank" rel="noopener">Facebook</a>
+      <a href="mailto:hello@opteva.ai">Email</a>
+      <a href="#book">Book a Call</a>
+      <a href="https://opteva.ai" target="_blank" rel="noopener">opteva.ai</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">&copy; 2026 Stephanie Sullivan. All rights reserved.</div>
+    <div class="footer-legal">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms &amp; Conditions</a>
+      <a href="https://steph.opteva.ai">steph.opteva.ai</a>
+    </div>
   </div>
 </footer>
 
