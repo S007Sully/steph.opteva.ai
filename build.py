@@ -1,33 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<link rel="icon" type="image/png" href="/opteva-mark.png"/>
-<link rel="apple-touch-icon" href="/opteva-mark.png"/>
-<title>Stephanie Sullivan | Fractional COO, CFO, CMO &amp; CTO for Med Spas</title>
-<meta name="description" content="26-year med spa operator. Fractional executive for single-location med spa owners: operations, finance, marketing and technology, from one person who ran all four."/>
+#!/usr/bin/env python3
+"""Build steph.opteva.ai from pages/*.html fragments.
 
-<link rel="canonical" href="https://steph.opteva.ai/"/>
-<meta property="og:type" content="website"/>
-<meta property="og:site_name" content="Stephanie Sullivan"/>
-<meta property="og:locale" content="en_US"/>
-<meta property="og:url" content="https://steph.opteva.ai/"/>
-<meta property="og:title" content="Stephanie Sullivan | Fractional COO, CFO, CMO &amp; CTO for Med Spas"/>
-<meta property="og:description" content="26-year med spa operator. Fractional executive for single-location med spa owners: operations, finance, marketing and technology, from one person who ran all four."/>
-<meta property="og:image" content="https://steph.opteva.ai/og-image.png"/>
-<meta property="og:image:width" content="1200"/>
-<meta property="og:image:height" content="630"/>
-<meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="Stephanie Sullivan | Fractional COO, CFO, CMO &amp; CTO for Med Spas"/>
-<meta name="twitter:description" content="26-year med spa operator. Fractional executive for single-location med spa owners: operations, finance, marketing and technology, from one person who ran all four."/>
-<meta name="twitter:image" content="https://steph.opteva.ai/og-image.png"/>
-<meta name="theme-color" content="#182C63"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;1,400&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Person", "@id": "https://steph.opteva.ai/#person", "name": "Stephanie Sullivan", "url": "https://steph.opteva.ai/", "image": "https://steph.opteva.ai/stephanie-sullivan.png", "jobTitle": "Fractional COO, CFO, CMO and CTO for medical aesthetics", "description": "26-year med spa operator. Fractional executive for single-location med spa owners: operations, finance, marketing and technology. Founder of Opteva.", "worksFor": {"@id": "https://steph.opteva.ai/#practice"}, "email": "hello@opteva.ai", "telephone": "+1-312-898-8620", "address": {"@type": "PostalAddress", "addressLocality": "Easton", "addressRegion": "PA", "addressCountry": "US"}, "knowsAbout": ["Med spa operations", "Med spa finance and pricing", "Local search and Google Business Profile", "Social media content systems", "GoHighLevel", "AI systems for service businesses"], "sameAs": ["https://www.linkedin.com/in/stephanie-r-sullivan/", "https://www.instagram.com/opteva.io/", "https://www.facebook.com/opteva.i/", "https://opteva.ai/"]}, {"@type": "ProfessionalService", "@id": "https://steph.opteva.ai/#practice", "name": "Stephanie Sullivan", "url": "https://steph.opteva.ai/", "image": "https://steph.opteva.ai/og-image.png", "description": "Fractional executive practice for single-location med spas: operations (COO), finance (CFO), marketing (CMO) and technology (CTO), from one operator with 26 years in medical aesthetics.", "founder": {"@id": "https://steph.opteva.ai/#person"}, "areaServed": "US", "telephone": "+1-312-898-8620", "email": "hello@opteva.ai", "address": {"@type": "PostalAddress", "addressLocality": "Easton", "addressRegion": "PA", "addressCountry": "US"}, "serviceType": ["Fractional COO", "Fractional CFO", "Fractional CMO", "Fractional CTO", "Operations and financial audit", "Owner advisory"], "knowsAbout": ["Medical aesthetics", "Med spa operations"]}, {"@type": "WebSite", "@id": "https://steph.opteva.ai/#website", "url": "https://steph.opteva.ai/", "name": "Stephanie Sullivan", "publisher": {"@id": "https://steph.opteva.ai/#practice"}, "inLanguage": "en-US"}]}</script>
-<style>
+Usage: python3 build.py            (from the repo root)
+Then:  netlify deploy --dir . --site a111e09a-e8ce-49e6-a0a2-3bcf00f93330          (preview)
+       netlify deploy --prod --dir . --site a111e09a-e8ce-49e6-a0a2-3bcf00f93330   (live)
+
+Each fragment starts with a front matter block:
+  title:        <title> and og:title (under 60 chars)
+  description:  meta description (under 155 chars)
+  slug:         output file name without .html ("index" for the home page)
+  eyebrow:      small label above the H1 on inner pages (optional)
+  h1:           page heading (optional; home page supplies its own hero)
+  lede:         one-sentence intro under the H1 (optional)
+  service:      if set, the page also emits Service schema with this name
+  nav:          which top-level nav item is active (about|services|results|writing|contact)
+
+Any page containing an element with class="tbd" is treated as a draft:
+it renders with noindex, a banner, and is left out of the sitemap.
+"""
+import re, json, html, pathlib, datetime, urllib.request, xml.etree.ElementTree as ET
+
+ROOT = pathlib.Path(__file__).resolve().parent
+PAGES = ROOT / "pages"
+SITE = "https://steph.opteva.ai"
+PERSON = SITE + "/#person"
+PRACTICE = SITE + "/#practice"
+BOOKING = "https://api.opteva.ai/widget/booking/d2KmG49HKwyvLOS2HF5G"
+BOOKING_FALLBACK = "https://api.opteva.ai/widget/bookings/opteva-free-audit"
+YEAR = datetime.date.today().year
+
+SERVICES = [
+    ("/services", "Overview", "How the audit, the seats and advisory fit together"),
+    ("/fractional-coo", "Operations", "Fractional COO"),
+    ("/fractional-cfo", "Finance", "Fractional CFO"),
+    ("/fractional-cmo", "Marketing", "Fractional CMO"),
+    ("/technology", "Technology", "Fractional CTO"),
+    ("/audit", "The Audit", "Fixed scope. Start here."),
+    ("/advisory", "Owner Advisory", "Calls, not execution"),
+]
+
+CSS = r"""
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--navy:#182C63;--aqua:#30C6CC;--ink:#0E1A3D;--paper:#FBFAF7;--gray:#99A1A6;--body:#3d4b5c;--soft:#F4F6FB;--line:rgba(24,44,99,.08)}
 html{scroll-behavior:smooth}
@@ -248,117 +260,32 @@ footer{background:var(--ink);border-top:1px solid rgba(255,255,255,.08);padding:
   .cta-row{align-items:stretch}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.card{transition:none}}
-</style>
-</head>
-<body>
-<nav>
+"""
+
+def nav(active):
+    menu = "".join(f'<a href="{u}"{" class=sep" if u=="/audit" else ""}>{l}<small>{d}</small></a>' for u, l, d in SERVICES)
+    mobile_sub = "".join(f'<a class="sub" href="{u}">{l} <small style="color:var(--gray);font-weight:400">· {d}</small></a>' for u, l, d in SERVICES)
+    A = lambda k: ' class="active"' if active == k else ""
+    return f"""<nav>
   <a href="/" class="brand">Stephanie Sullivan<span>.</span></a>
   <ul class="nav-links">
-    <li><a href="/about">About</a></li>
-    <li class="has-menu"><button type="button" aria-haspopup="true" aria-expanded="false">Services</button><div class="menu"><a href="/services">Overview<small>How the audit, the seats and advisory fit together</small></a><a href="/fractional-coo">Operations<small>Fractional COO</small></a><a href="/fractional-cfo">Finance<small>Fractional CFO</small></a><a href="/fractional-cmo">Marketing<small>Fractional CMO</small></a><a href="/technology">Technology<small>Fractional CTO</small></a><a href="/audit" class=sep>The Audit<small>Fixed scope. Start here.</small></a><a href="/advisory">Owner Advisory<small>Calls, not execution</small></a></div></li>
-    <li><a href="/results">Results</a></li>
-    <li><a href="/writing">Writing</a></li>
-    <li><a href="/contact">Contact</a></li>
+    <li><a href="/about"{A("about")}>About</a></li>
+    <li class="has-menu{' active' if active=='services' else ''}"><button type="button" aria-haspopup="true" aria-expanded="false">Services</button><div class="menu">{menu}</div></li>
+    <li><a href="/results"{A("results")}>Results</a></li>
+    <li><a href="/writing"{A("writing")}>Writing</a></li>
+    <li><a href="/contact"{A("contact")}>Contact</a></li>
     <li><a href="/audit" class="btn btn-sm">Book the Audit</a></li>
   </ul>
   <button class="burger" type="button" aria-label="Menu" aria-expanded="false"><i></i><i></i><i></i></button>
 </nav>
 <div class="mobile" id="mobile">
   <a href="/about">About</a>
-  <div class="grp">Services</div><a class="sub" href="/services">Overview <small style="color:var(--gray);font-weight:400">· How the audit, the seats and advisory fit together</small></a><a class="sub" href="/fractional-coo">Operations <small style="color:var(--gray);font-weight:400">· Fractional COO</small></a><a class="sub" href="/fractional-cfo">Finance <small style="color:var(--gray);font-weight:400">· Fractional CFO</small></a><a class="sub" href="/fractional-cmo">Marketing <small style="color:var(--gray);font-weight:400">· Fractional CMO</small></a><a class="sub" href="/technology">Technology <small style="color:var(--gray);font-weight:400">· Fractional CTO</small></a><a class="sub" href="/audit">The Audit <small style="color:var(--gray);font-weight:400">· Fixed scope. Start here.</small></a><a class="sub" href="/advisory">Owner Advisory <small style="color:var(--gray);font-weight:400">· Calls, not execution</small></a>
+  <div class="grp">Services</div>{mobile_sub}
   <a href="/results">Results</a><a href="/writing">Writing</a><a href="/contact">Contact</a>
   <a href="/audit" class="btn">Book the Audit <span class="arrow">&rarr;</span></a>
-</div><section class="hero">
-  <div>
-    <div class="eyebrow">For single-location med spa owners</div>
-    <h1>The executive team your spa can't hire <em>yet</em>.</h1>
-    <p class="hero-sub">I ran a med spa for 26 years. Trained the providers, opened the locations, read the P&amp;L every month, ranked it #1 on Google, and built the systems it ran on. Now I do that for owners who need an operator in the room without four salaries.</p>
-    <div class="cta-row">
-      <div class="btn-pair">
-        <a href="/audit" class="btn btn-lg">Book the Audit <span class="arrow">&rarr;</span></a>
-        <a href="/services" class="textlink">See how it works</a>
-      </div>
-      <p class="cta-note">A fixed-scope look at operations, finance, marketing and technology. You get the report, ranked by dollars, whether or not we work together afterward.</p>
-    </div>
-  </div>
-  <div class="photo-wrap">
-    <img src="/stephanie-sullivan.png" alt="Stephanie Sullivan"/>
-    <div class="badge"><div class="badge-num">26</div><div class="badge-label">Years Running a Med Spa</div></div>
-  </div>
-</section>
+</div>"""
 
-<div class="stats">
-  <div class="stat"><div class="stat-n">26</div><div class="stat-l">Years running a med spa</div></div>
-  <div class="stat"><div class="stat-n">100+</div><div class="stat-l">Providers trained nationally</div></div>
-  <div class="stat"><div class="stat-n">#1</div><div class="stat-l">Ranked my own company on Google</div></div>
-  <div class="stat"><div class="stat-n">4</div><div class="stat-l">Seats, one operator</div></div>
-</div>
-
-<section class="white">
-  <div class="wrap">
-    <div class="eyebrow">Who this is for</div>
-    <h2>You are the COO, the CFO, the CMO and the CTO. You are also the injector.</h2>
-    <p class="intro">A single-location spa doing one to five million a year is a real business with no executive team. The owner carries every seat between appointments, and the business grows exactly as fast as that owner's spare hours. If any of these sound familiar, that is the gap.</p>
-    <div class="cards">
-      <div class="card symptom"><h3>Revenue is up and take-home is flat.</h3><p>More appointments, more product, more staff, same money at the end of the month. Nobody is looking at margin by service, and the prices were set three years ago.</p></div>
-      <div class="card symptom"><h3>The team runs on your memory.</h3><p>Schedules, rebooking, inventory, how the front desk answers the phone. It works because you are there. The week you are not, it slips.</p></div>
-      <div class="card symptom"><h3>The numbers arrive late, if at all.</h3><p>The bookkeeper closes the month six weeks after it ends. Marketing spend is a feeling. The booking system, the CRM and the phones do not talk to each other.</p></div>
-    </div>
-  </div>
-</section>
-
-<section>
-  <div class="wrap">
-    <div class="eyebrow">One operator, four seats</div>
-    <h2>Pick the seat that is bleeding. I have sat in all four.</h2>
-    <p class="intro">Most owners do not need four executives. They need one person who understands how the four connect, and the discipline to fix the one that matters first. The audit tells us which. The seat pages tell you what each one covers.</p>
-    <div class="cards four">
-      <a class="card" href="/fractional-coo"><span class="k">Operations</span><h3>Fractional COO</h3><p>Team, provider schedules and utilization, front desk, rebooking, SOPs, hiring, vendors.</p><div class="proof"><b>In my spa</b>I ran the schedule, the hiring and the rebooking myself for 26 years.</div><span class="more">Operations seat &rarr;</span></a>
-      <a class="card" href="/fractional-cfo"><span class="k">Finance</span><h3>Fractional CFO</h3><p>Cash flow, pricing, margin by service, provider compensation, memberships, a KPI dashboard you read weekly.</p><div class="proof"><b>In my spa</b>I set the prices, paid the providers and read the P&amp;L every month.</div><span class="more">Finance seat &rarr;</span></a>
-      <a class="card" href="/fractional-cmo"><span class="k">Marketing</span><h3>Fractional CMO</h3><p>Google Business Profile and local search, social that books, rebooking campaigns, reviews, oversight of any agency you pay.</p><div class="proof"><b>In my spa</b>Ranked my own company #1 on Google without an agency, then built a content platform because social was the next gap.</div><span class="more">Marketing seat &rarr;</span></a>
-      <a class="card" href="/technology"><span class="k">Technology</span><h3>Fractional CTO</h3><p>Booking and CRM, GoHighLevel, phones and follow-up, automations, AI tools worth having, reporting, vendor decisions.</p><div class="proof"><b>In my spa</b>I built Opteva on GoHighLevel: the schema, the guardrails, the publishing. I do not evaluate software from a brochure.</div><span class="more">Technology seat &rarr;</span></a>
-    </div>
-  </div>
-</section>
-
-<section class="navy center">
-  <div class="wrap">
-    <div class="eyebrow">How it works</div>
-    <h2>Audit first. Then one or two seats. Not all four.</h2>
-    <div class="steps">
-      <div class="step"><h3>The Audit</h3><p>Two to three weeks, fixed scope. I look at all four areas and hand you one report: where the money and the hours are leaking, ranked by dollars, and which seat fixes it. Useful on its own.</p></div>
-      <div class="step"><h3>Choose the seats</h3><p>The report says where the leak is. You decide whether you want me in that seat, or just the plan. Most engagements are one seat. Some are two. Four is a sign something else is wrong.</p></div>
-      <div class="step"><h3>The retainer, or advisory</h3><p>A monthly seat with real ownership and a cadence you can plan around. Or, if you have a manager and need a second set of operator eyes, recurring advisory calls without execution.</p></div>
-    </div>
-  </div>
-</section>
-
-<section class="white">
-  <div class="wrap">
-    <div class="eyebrow">What clients say</div>
-    <h2>Operators I have worked with.</h2>
-    <p class="intro">These are Opteva clients, the content platform I built. The fractional practice is newer, and I would rather show you three real quotes than invent a fourth.</p>
-    <div class="tgrid">
-      <div class="tcard"><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><div class="tquote">"I wasn't visible at all on social media. Opteva got me up and running within 48 hours. I saw a 133% increase in visibility in just one week and booked two new patients."</div><div class="tname">Jed Correa</div><div class="trole">Chicago, IL</div></div>
-      <div class="tcard"><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><div class="tquote">"My med spa was drowning in social media overload. It was messy. Opteva cleaned everything up and gave my business real visibility online."</div><div class="tname">Kara Crockett</div><div class="trole">Seattle, WA</div></div>
-      <div class="tcard"><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><div class="tquote">"Opteva helped me get my socials and Google Business Profile updated and running. With the branded dashboard and all my socials in one place, I finally had time to focus on making money."</div><div class="tname">Stephanie Jordan</div><div class="trole">Las Vegas, NV</div></div>
-    </div>
-  </div>
-</section>
-
-<section class="ink cta-sec">
-  <div class="eyebrow">Start here</div>
-  <h2>Operator to operator. Start with the audit.</h2>
-  <p>Fifteen minutes on a call to see if it fits. Then a fixed-scope look at the whole business, with a report you keep either way.</p>
-  <div class="cta-row"><a href="/audit" class="btn btn-lg btn-aqua">Book the Audit <span class="arrow">&rarr;</span></a><p class="cta-note">Or <a href="/contact" style="color:rgba(255,255,255,.8)">send a note</a> if you would rather start with a question.</p></div>
-  <div class="contacts">
-    <div class="contact">&#128231; <a href="mailto:hello@opteva.ai">hello@opteva.ai</a></div>
-    <div class="contact">&#128222; <a href="tel:+13128988620">+1 (312) 898-8620</a></div>
-    <div class="contact">&#128205; Easton, PA</div>
-    <div class="contact">&#128188; <a href="https://www.linkedin.com/in/stephanie-r-sullivan/" target="_blank" rel="noopener">LinkedIn</a></div>
-  </div>
-</section>
-<footer>
+FOOTER = f"""<footer>
   <div class="footer-top">
     <div>
       <div class="footer-name">Stephanie Sullivan<span>.</span></div>
@@ -372,27 +299,157 @@ footer{background:var(--ink);border-top:1px solid rgba(255,255,255,.08);padding:
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">&copy; 2026 Stephanie Sullivan. All rights reserved.</div>
+    <div class="footer-copy">&copy; {YEAR} Stephanie Sullivan. All rights reserved.</div>
     <div class="footer-legal"><a href="/privacy">Privacy Policy</a><a href="/terms">Terms &amp; Conditions</a><a href="https://steph.opteva.ai">steph.opteva.ai</a></div>
   </div>
 </footer>
 <script>
-(function(){
+(function(){{
   var b=document.querySelector('.burger'),m=document.getElementById('mobile');
-  b.addEventListener('click',function(){var o=m.classList.toggle('open');b.setAttribute('aria-expanded',o);document.body.classList.toggle('nav-open',o);});
-  document.querySelectorAll('.has-menu>button').forEach(function(btn){
+  b.addEventListener('click',function(){{var o=m.classList.toggle('open');b.setAttribute('aria-expanded',o);document.body.classList.toggle('nav-open',o);}});
+  document.querySelectorAll('.has-menu>button').forEach(function(btn){{
     var li=btn.parentElement;
-    btn.addEventListener('click',function(e){e.stopPropagation();var o=li.classList.toggle('open');btn.setAttribute('aria-expanded',o);});
-    li.addEventListener('mouseenter',function(){li.classList.add('open');});
-    li.addEventListener('mouseleave',function(){li.classList.remove('open');});
-  });
-  document.addEventListener('click',function(){document.querySelectorAll('.has-menu.open').forEach(function(l){l.classList.remove('open');});});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'){document.querySelectorAll('.has-menu.open').forEach(function(l){l.classList.remove('open');});m.classList.remove('open');document.body.classList.remove('nav-open');}});
-  var h=location.hash.replace('#',''),map={about:'/about',mission:'/about',opteva:'/opteva',book:'/audit',contact:'/contact',results:'/results',passions:'/about',offer:'/services'};
+    btn.addEventListener('click',function(e){{e.stopPropagation();var o=li.classList.toggle('open');btn.setAttribute('aria-expanded',o);}});
+    li.addEventListener('mouseenter',function(){{li.classList.add('open');}});
+    li.addEventListener('mouseleave',function(){{li.classList.remove('open');}});
+  }});
+  document.addEventListener('click',function(){{document.querySelectorAll('.has-menu.open').forEach(function(l){{l.classList.remove('open');}});}});
+  document.addEventListener('keydown',function(e){{if(e.key==='Escape'){{document.querySelectorAll('.has-menu.open').forEach(function(l){{l.classList.remove('open');}});m.classList.remove('open');document.body.classList.remove('nav-open');}}}});
+  var h=location.hash.replace('#',''),map={{about:'/about',mission:'/about',opteva:'/opteva',book:'/audit',contact:'/contact',results:'/results',passions:'/about',offer:'/services'}};
   if(location.pathname==='/'&&map[h])location.replace(map[h]);
-})();
+}})();
 </script>
 <script src="https://api.opteva.ai/js/embed.js" type="text/javascript"></script>
+"""
 
-</body>
-</html>
+def parse(path):
+    raw = path.read_text(encoding="utf-8")
+    m = re.match(r"^---\s*\n(.*?)\n---\s*\n(.*)$", raw, re.S)
+    meta = {}
+    for ln in m.group(1).splitlines():
+        if ":" in ln:
+            k, v = ln.split(":", 1); meta[k.strip()] = v.strip()
+    body = m.group(2)
+    meta["body"] = body
+    meta["draft"] = 'class="tbd"' in body
+    meta["url"] = SITE + "/" if meta["slug"] == "index" else f"{SITE}/{meta['slug']}"
+    return meta
+
+def ld(o): return '<script type="application/ld+json">' + json.dumps(o, ensure_ascii=False) + "</script>"
+
+def schema(p):
+    person = {"@type": "Person", "@id": PERSON, "name": "Stephanie Sullivan", "url": SITE + "/", "image": SITE + "/stephanie-sullivan.png",
+              "jobTitle": "Fractional COO, CFO, CMO and CTO for medical aesthetics",
+              "description": "26-year med spa operator. Fractional executive for single-location med spa owners: operations, finance, marketing and technology. Founder of Opteva.",
+              "worksFor": {"@id": PRACTICE}, "email": "hello@opteva.ai", "telephone": "+1-312-898-8620",
+              "address": {"@type": "PostalAddress", "addressLocality": "Easton", "addressRegion": "PA", "addressCountry": "US"},
+              "knowsAbout": ["Med spa operations", "Med spa finance and pricing", "Local search and Google Business Profile", "Social media content systems", "GoHighLevel", "AI systems for service businesses"],
+              "sameAs": ["https://www.linkedin.com/in/stephanie-r-sullivan/", "https://www.instagram.com/opteva.io/", "https://www.facebook.com/opteva.i/", "https://opteva.ai/"]}
+    practice = {"@type": "ProfessionalService", "@id": PRACTICE, "name": "Stephanie Sullivan", "url": SITE + "/", "image": SITE + "/og-image.png",
+                "description": "Fractional executive practice for single-location med spas: operations (COO), finance (CFO), marketing (CMO) and technology (CTO), from one operator with 26 years in medical aesthetics.",
+                "founder": {"@id": PERSON}, "areaServed": "US", "telephone": "+1-312-898-8620", "email": "hello@opteva.ai",
+                "address": {"@type": "PostalAddress", "addressLocality": "Easton", "addressRegion": "PA", "addressCountry": "US"},
+                "serviceType": ["Fractional COO", "Fractional CFO", "Fractional CMO", "Fractional CTO", "Operations and financial audit", "Owner advisory"],
+                "knowsAbout": ["Medical aesthetics", "Med spa operations"]}
+    site = {"@type": "WebSite", "@id": SITE + "/#website", "url": SITE + "/", "name": "Stephanie Sullivan", "publisher": {"@id": PRACTICE}, "inLanguage": "en-US"}
+    g = [person, practice, site]
+    if p["slug"] != "index":
+        g.append({"@type": "BreadcrumbList", "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "Stephanie Sullivan", "item": SITE + "/"},
+            {"@type": "ListItem", "position": 2, "name": p.get("h1", p["title"]), "item": p["url"]}]})
+        g.append({"@type": "WebPage", "@id": p["url"] + "#page", "url": p["url"], "name": p["title"], "description": p["description"], "isPartOf": {"@id": SITE + "/#website"}, "about": {"@id": PRACTICE}})
+    if p.get("service"):
+        g.append({"@type": "Service", "@id": p["url"] + "#service", "name": p["service"], "serviceType": p["service"], "provider": {"@id": PRACTICE},
+                  "areaServed": "US", "audience": {"@type": "BusinessAudience", "audienceType": "Single-location med spa owners"}, "description": p["description"], "url": p["url"]})
+    return ld({"@context": "https://schema.org", "@graph": g})
+
+def render(p):
+    inner = p["slug"] != "index"
+    head = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="icon" type="image/png" href="/opteva-mark.png"/>
+<link rel="apple-touch-icon" href="/opteva-mark.png"/>
+<title>{html.escape(p['title'])}</title>
+<meta name="description" content="{html.escape(p['description'], quote=True)}"/>
+{'<meta name="robots" content="noindex,nofollow"/>' if p['draft'] else ''}
+<link rel="canonical" href="{p['url']}"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="Stephanie Sullivan"/>
+<meta property="og:locale" content="en_US"/>
+<meta property="og:url" content="{p['url']}"/>
+<meta property="og:title" content="{html.escape(p['title'], quote=True)}"/>
+<meta property="og:description" content="{html.escape(p['description'], quote=True)}"/>
+<meta property="og:image" content="{SITE}/og-image.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="{html.escape(p['title'], quote=True)}"/>
+<meta name="twitter:description" content="{html.escape(p['description'], quote=True)}"/>
+<meta name="twitter:image" content="{SITE}/og-image.png"/>
+<meta name="theme-color" content="#182C63"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;1,400&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+{schema(p)}
+<style>{CSS}</style>
+</head>
+<body>
+"""
+    banner = '<div class="draft-banner">Draft preview. Items highlighted in amber need Stephanie\'s input before this page goes live. Not indexed.</div>' if p["draft"] else ""
+    hero = ""
+    if inner and p.get("h1"):
+        hero = f"""<header class="page-hero"><div class="wrap">
+  <div class="crumbs"><a href="/">Home</a><i>/</i>{'<a href="/services">Services</a><i>/</i>' if p.get('nav')=='services' and p['slug']!='services' else ''}{html.escape(p.get('crumb') or p.get('eyebrow') or p['h1'])}</div>
+  {f'<div class="eyebrow">{p["eyebrow"]}</div>' if p.get('eyebrow') else ''}
+  <h1>{p['h1']}</h1>
+  {f'<p class="lede">{p["lede"]}</p>' if p.get('lede') else ''}
+</div></header>"""
+    body = p["body"].replace("{{BOOKING}}", BOOKING).replace("{{BOOKING_FALLBACK}}", BOOKING_FALLBACK).replace("{{POSTS}}", posts_html())
+    out = head + nav(p.get("nav", "")) + banner + hero + body + FOOTER + "\n</body>\n</html>\n"
+    (ROOT / f"{p['slug']}.html").write_text(out, encoding="utf-8")
+
+_posts_cache = None
+def posts_html():
+    global _posts_cache
+    if _posts_cache is not None: return _posts_cache
+    items = []
+    try:
+        try:
+            with urllib.request.urlopen("https://opteva.ai/blog/feed.xml", timeout=6) as r:
+                raw = r.read()
+        except Exception:
+            import subprocess
+            raw = subprocess.run(["curl", "-fsSL", "--max-time", "8", "https://opteva.ai/blog/feed.xml"], capture_output=True, check=True).stdout
+        root = ET.fromstring(raw)
+        for it in root.iter("item"):
+            d = it.findtext("pubDate", "")
+            try: d = datetime.datetime.strptime(d[:16], "%a, %d %b %Y").strftime("%b %-d, %Y")
+            except Exception: pass
+            items.append((it.findtext("link"), it.findtext("title"), it.findtext("description"), d))
+    except Exception as e:
+        print("  feed unavailable:", e)
+    if items:
+        _posts_cache = '<div class="posts">' + "".join(f'<a class="post" href="{l}"><time>{d}</time><div><h3>{html.escape(t)}</h3><p>{html.escape(desc)}</p></div></a>' for l, t, desc, d in items[:6]) + "</div>"
+    else:
+        _posts_cache = '<p class="intro" style="margin-top:28px">The first posts are being written now. The blog lives at <a class="textlink" href="https://opteva.ai/blog/">opteva.ai/blog</a>.</p>'
+    return _posts_cache
+
+def sitemap(pages):
+    today = datetime.date.today().isoformat()
+    rows = [(p["url"], today, "1.0" if p["slug"] == "index" else "0.7") for p in pages if not p["draft"]]
+    rows += [(SITE + "/privacy", "2026-09-30", "0.2"), (SITE + "/terms", "2026-09-30", "0.2")]
+    (ROOT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+        "".join(f"  <url><loc>{u}</loc><lastmod>{m}</lastmod><priority>{pr}</priority></url>\n" for u, m, pr in rows) + "</urlset>\n", encoding="utf-8")
+
+def main():
+    pages = [parse(f) for f in sorted(PAGES.glob("*.html"))]
+    for p in pages:
+        render(p); print(f"  {'DRAFT ' if p['draft'] else 'ready '} /{'' if p['slug']=='index' else p['slug']}")
+    sitemap(pages)
+    print(f"built {len(pages)} pages; {sum(1 for p in pages if p['draft'])} drafts (noindex); sitemap updated")
+
+if __name__ == "__main__":
+    main()
