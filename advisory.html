@@ -213,8 +213,9 @@ a.card:hover{box-shadow:0 8px 28px rgba(24,44,99,.09);transform:translateY(-3px)
 .post p{font-size:14px;color:var(--body);font-weight:300;line-height:1.6}
 
 /* DRAFT PLACEHOLDERS */
-.tbd{background:#FFF1C9;color:#6B4E00;border:1px dashed #D9A400;border-radius:4px;padding:1px 7px;font-size:.9em;font-weight:500;font-style:normal}
-.draft-banner{background:#FFF4D6;color:#7A5A00;text-align:center;font-size:13px;font-weight:600;padding:9px 16px;margin-top:64px}
+.tbd{display:none}
+.draft-banner{display:none}
+li:has(>mark.tbd:only-child),p:has(>mark.tbd:only-child),details:has(>p:only-child>mark.tbd:only-child){display:none}
 .draft-banner+.page-hero,.draft-banner+.hero{padding-top:56px}
 
 /* FOOTER */
