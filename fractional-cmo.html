@@ -213,8 +213,9 @@ a.card:hover{box-shadow:0 8px 28px rgba(24,44,99,.09);transform:translateY(-3px)
 .post p{font-size:14px;color:var(--body);font-weight:300;line-height:1.6}
 
 /* DRAFT PLACEHOLDERS */
-.tbd{background:#FFF1C9;color:#6B4E00;border:1px dashed #D9A400;border-radius:4px;padding:1px 7px;font-size:.9em;font-weight:500;font-style:normal}
-.draft-banner{background:#FFF4D6;color:#7A5A00;text-align:center;font-size:13px;font-weight:600;padding:9px 16px;margin-top:64px}
+.tbd{display:none}
+.draft-banner{display:none}
+li:has(>mark.tbd:only-child),p:has(>mark.tbd:only-child),details:has(>p:only-child>mark.tbd:only-child){display:none}
 .draft-banner+.page-hero,.draft-banner+.hero{padding-top:56px}
 
 /* FOOTER */
@@ -299,7 +300,7 @@ footer{background:var(--ink);border-top:1px solid rgba(255,255,255,.08);padding:
       <li><strong>The audit first.</strong> Two to three weeks across all four areas, so the seat starts with a ranked list, not a guess.</li>
       <li><strong>Thirty-day setup.</strong> Access, baselines, the first dashboard, the first fixes that pay for the month.</li>
       <li><strong>The cadence.</strong> <mark class="tbd">Steph: days or hours per month, remote or on site, how the month is structured.</mark></li>
-      <li><strong>Term and price.</strong> <mark class="tbd">Steph: minimum term and whether the price is public or scoped after the audit.</mark></li>
+      <li><strong>Term and price.</strong> Scoped after the audit, once I know what the seat actually needs to cover.</li>
     </ol>
     <h2>Who this is for</h2>
     <p>Owners who post when they remember, pay an agency they cannot evaluate, or have a Google profile they set up in 2019 and have not touched. You do not need more marketing. You need someone to decide what it is for.</p>
