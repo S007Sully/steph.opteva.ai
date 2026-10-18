@@ -25,8 +25,8 @@ PAGES = ROOT / "pages"
 SITE = "https://steph.opteva.ai"
 PERSON = SITE + "/#person"
 PRACTICE = SITE + "/#practice"
-BOOKING = "https://api.opteva.ai/widget/booking/d2KmG49HKwyvLOS2HF5G"
-BOOKING_FALLBACK = "https://api.opteva.ai/widget/bookings/opteva-free-audit"
+BOOKING = "https://book.opteva.ai/20"
+BOOKING_FALLBACK = "https://book.opteva.ai/20"
 YEAR = datetime.date.today().year
 
 SERVICES = [
