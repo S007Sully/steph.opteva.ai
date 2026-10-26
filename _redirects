@@ -1,1 +1,5 @@
-/*  https://demo.opteva.ai/start  301!
+/privacy       /privacy.html   200
+/privacy.html  /privacy.html   200
+/terms         /terms.html     200
+/terms.html    /terms.html     200
+/*             https://demo.opteva.ai/start   301!
